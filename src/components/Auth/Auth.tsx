@@ -18,7 +18,8 @@ export const Auth = () => {
     formState: { errors, isSubmitting },
   } = useForm<LoginForm>()
 
-  function onSubmit(values: LoginForm) {
+  async function onSubmit(values: LoginForm) {
+    return new Promise((res) => setTimeout(() => res(values), 2000))
   }
 
   return (

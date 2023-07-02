@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Auth } from "./Auth";
 
@@ -28,6 +28,15 @@ it("should error when username input is not latins or numbers", async () => {
 
   userEvent.type(screen.getByLabelText(/Username/), "выуыфввфы!");
   userEvent.click(screen.getByRole("button", { name: /login/ }));
+
+  expect(
+    await screen.findByText(/only latins and numbers/)
+  ).toBeInTheDocument();
+
+  userEvent.type(screen.getByLabelText(/Username/), "dsad2133!");
+  userEvent.click(screen.getByRole("button", { name: /login/ }));
+
+  await waitFor(() => expect(screen.queryByText(/Loading/i)).not.toBeInTheDocument());
 
   expect(
     await screen.findByText(/only latins and numbers/)
