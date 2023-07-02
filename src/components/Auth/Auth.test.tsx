@@ -3,42 +3,94 @@ import userEvent from "@testing-library/user-event";
 import { Auth } from "./Auth";
 
 it("should error when username input is empty", async () => {
-  render(<Auth />);
-  
-  const buttonLogIn = screen.getByRole("button", { name: /login/ });
+  const onSubmit = jest.fn();
+  render(<Auth onSubmit={onSubmit} />);
 
-  userEvent.click(buttonLogIn);
+  userEvent.click(screen.getByRole("button", { name: /login/ }));
 
-  expect(await screen.findByText(/This is required/)).toBeInTheDocument();
+  await waitFor(() =>
+    expect(screen.queryByText(/Loading/i)).not.toBeInTheDocument()
+  );
+
+  expect(
+    screen.getByRole("textbox", { name: /username/i })
+  ).toHaveAccessibleDescription(/This is required/);
 });
 
 it("should error when username input is less 6 chars", async () => {
-  render(<Auth />);
-  const username = screen.getByLabelText(/Username/);
-  const buttonLogIn = screen.getByRole("button", { name: /login/ });
+  const onSubmit = jest.fn();
+  render(<Auth onSubmit={onSubmit} />);
 
-  userEvent.type(username, "te");
-  userEvent.click(buttonLogIn);
+  userEvent.type(screen.getByRole("textbox", { name: /username/i }), "te");
+  userEvent.click(screen.getByRole("button", { name: /login/ }));
 
-  expect(await screen.findByText(/length should be 6/)).toBeInTheDocument();
+  await waitFor(() =>
+    expect(screen.queryByText(/Loading/i)).not.toBeInTheDocument()
+  );
+
+  expect(
+    screen.getByRole("textbox", { name: /username/i })
+  ).toHaveAccessibleDescription(/length should be 6/);
 });
 
 it("should error when username input is not latins or numbers", async () => {
-  render(<Auth />);
+  const onSubmit = jest.fn();
+  render(<Auth onSubmit={onSubmit} />);
 
-  userEvent.type(screen.getByLabelText(/Username/), "выуыфввфы!");
+  userEvent.type(
+    screen.getByRole("textbox", { name: /username/i }),
+    "выуыфввфы!"
+  );
   userEvent.click(screen.getByRole("button", { name: /login/ }));
 
-  expect(
-    await screen.findByText(/only latins and numbers/)
-  ).toBeInTheDocument();
+  await waitFor(() =>
+    expect(screen.queryByText(/Loading/i)).not.toBeInTheDocument()
+  );
 
-  userEvent.type(screen.getByLabelText(/Username/), "dsad2133!");
+  expect(
+    screen.getByRole("textbox", { name: /username/i })
+  ).toHaveAccessibleDescription(/only latins and numbers/);
+
+  userEvent.type(
+    screen.getByRole("textbox", { name: /username/i }),
+    "dsad2133!"
+  );
   userEvent.click(screen.getByRole("button", { name: /login/ }));
 
-  await waitFor(() => expect(screen.queryByText(/Loading/i)).not.toBeInTheDocument());
+  await waitFor(() =>
+    expect(screen.queryByText(/Loading/i)).not.toBeInTheDocument()
+  );
 
   expect(
-    await screen.findByText(/only latins and numbers/)
-  ).toBeInTheDocument();
+    screen.getByRole("textbox", { name: /username/i })
+  ).toHaveAccessibleDescription(/only latins and numbers/);
+});
+
+it("should error when password less 6 chars and onSubmit no calling", async () => {
+  const onSubmit = jest.fn();
+  render(<Auth onSubmit={onSubmit} />);
+
+  userEvent.type(screen.getByLabelText(/password/i), "ds");
+  userEvent.click(screen.getByRole("button", { name: /login/ }));
+
+  await waitFor(() =>
+    expect(screen.queryByText(/Loading/i)).not.toBeInTheDocument()
+  );
+
+  expect(
+    screen.getByRole("textbox", { name: /password/i })
+  ).toHaveAccessibleDescription(/password less than 6 chars/i);
+  expect(onSubmit).not.toBeCalled();
+});
+
+it("should call submit when pass correct data", async () => {
+  const onSubmit = jest.fn();
+  onSubmit.mockImplementation(() => ({ finally: jest.fn() }));
+  render(<Auth onSubmit={onSubmit} />);
+
+  userEvent.type(screen.getByLabelText(/username/i), "test_name");
+  userEvent.type(screen.getByLabelText(/password/i), "qwerty123");
+  userEvent.click(screen.getByRole("button", { name: /login/ }));
+
+  await waitFor(() => expect(onSubmit).toBeCalled());
 });
